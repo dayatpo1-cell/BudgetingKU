@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BudgetingKU - Login</title>
+    <link rel="manifest" href="./manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4f46e5',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-100 min-h-screen pb-12 text-slate-800 flex flex-col justify-between">
+
+    <!-- HEADER LOGIN SCREEN -->
+    <header id="appHeader" class="bg-indigo-600 text-white p-4 text-center shadow-md font-bold text-xl hidden flex justify-between items-center max-w-md mx-auto w-full rounded-b-2xl">
+        <span>BudgetingKU</span>
+        <div class="flex items-center gap-2">
+            <span id="userDisplayName" class="text-xs bg-indigo-500 px-2.5 py-1 rounded-lg"></span>
+            <button onclick="logout()" class="text-xs bg-rose-500 hover:bg-rose-600 px-2.5 py-1 rounded-lg transition">Keluar</button>
+        </div>
+    </header>
+
+    <!-- HALAMAN LOGIN / REGISTER -->
+    <div id="loginScreen" class="max-w-md w-full mx-auto p-6 my-auto">
+        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 space-y-6">
+            <div class="text-center space-y-2">
+                <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl mx-auto flex items-center justify-center font-bold text-xl">🔒</div>
+                <h1 class="text-xl font-black text-slate-800">Selamat Datang di BudgetingKU</h1>
+                <p class="text-xs text-slate-400">Silakan masuk atau daftar akun baru untuk mengamankan data keuanganmu.</p>
+            </div>
+
+            <!-- Tab Switcher -->
+            <div class="flex bg-slate-100 p-1 rounded-xl">
+                <button onclick="switchTab('login')" id="tabLogin" class="flex-1 py-2 text-xs font-bold rounded-lg bg-white text-indigo-600 shadow-sm transition">Masuk</button>
+                <button onclick="switchTab('register')" id="tabRegister" class="flex-1 py-2 text-xs font-bold rounded-lg text-slate-500 transition">Daftar Akun</button>
+            </div>
+
+            <!-- Form Auth -->
+            <form id="authForm" onsubmit="handleAuth(event)" class="space-y-4">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Nama Pengguna / Username</label>
+                    <input type="text" id="authUsername" placeholder="Contoh: nurhidayat" required class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-primary">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Kata Sandi / Password</label>
+                    <input type="password" id="authPassword" placeholder="••••••••" required class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-primary">
+                </div>
+                <button type="submit" id="authBtn" class="w-full bg-indigo-600 text-white py-3 rounded-xl text-sm font-bold hover:bg-indigo-700 transition shadow-sm">Masuk ke Aplikasi</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- UTAMA APLIKASI (DISEMBUNYIKAN SEBELUM LOGIN) -->
+    <main id="mainApp" class="max-w-md mx-auto p-4 space-y-4 w-full hidden">
+
+        <!-- Pemilih Periode Bulan -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+            <label for="monthFilter" class="text-sm font-semibold text-slate-700">Periode Bulan:</label>
+            <input type="month" id="monthFilter" class="px-3 py-1.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-primary font-medium text-slate-700">
+        </div>
+
+        <!-- Dashboard Ringkasan Saldo -->
+        <div class="grid grid-cols-2 gap-3">
+            <div class="bg-emerald-50 border border-emerald-100 p-3 rounded-2xl text-center">
+                <p class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Dana Masuk</p>
+                <p id="totalIncomeText" class="text-sm font-extrabold text-emerald-700 mt-0.5">Rp 0</p>
+            </div>
+            <div class="bg-rose-50 border border-rose-100 p-3 rounded-2xl text-center">
+                <p class="text-[10px] font-bold text-rose-600 uppercase tracking-wider">Total Pengeluaran</p>
+                <p id="totalExpenseText" class="text-sm font-extrabold text-rose-700 mt-0.5">Rp 0</p>
+            </div>
+            <div class="col-span-2 bg-indigo-50 border border-indigo-100 p-4 rounded-2xl text-center space-y-0.5">
+                <p class="text-xs font-bold text-indigo-500 uppercase tracking-wider">Sisa Saldo Periode Ini</p>
+                <p id="remainingBudget" class="text-2xl font-black text-indigo-700">Rp 0</p>
+            </div>
+        </div>
+
+        <!-- Form Input Pemasukan -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
+            <h2 class="font-bold text-slate-700 text-base flex items-center gap-2"><span>💰</span> Pemasukan Bulan Ini</h2>
+            <form id="incomeForm" class="space-y-3 mb-3">
+                <input type="text" id="incomeName" placeholder="Sumber (Gaji, Komisi, Bonus)" required class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-primary">
+                <input type="number" id="incomeAmount" placeholder="Nominal (Rp)" required class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-primary">
+                <button type="submit" class="w-full bg-emerald-600 text-white py-2 rounded-xl text-sm font-medium hover:bg-emerald-700 transition">Tambah Pemasukan</button>
+            </form>
+            <div id="incomeList" class="space-y-2 text-sm text-slate-500">
+                Belum ada pemasukan.
+            </div>
+        </div>
+
+        <!-- Form Catat Pengeluaran Harian -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
+            <h2 class="font-bold text-slate-700 text-base flex items-center gap-2"><span>💸</span> Catat Pengeluaran Harian</h2>
+            <form id="transForm" class="space-y-3 mb-3">
+                <input type="text" id="transName" placeholder="Nama Transaksi (Makan, Belanja)" required class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-primary">
+                <input type="number" id="transAmount" placeholder="Nominal (Rp)" required class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-primary">
+                <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded-xl text-sm font-medium hover:bg-indigo-700 transition">Simpan Transaksi</button>
+            </form>
+            <div id="transList" class="space-y-2 text-sm text-slate-500">
+                Belum ada pengeluaran harian.
+            </div>
+        </div>
+
+        <!-- Tambah Tagihan Rutin Bulanan -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
+            <h2 class="font-bold text-slate-700 text-base flex items-center gap-2 text-indigo-600"><span>📄</span> Tambah Tagihan Rutin Bulanan</h2>
+            <form id="billForm" class="space-y-3">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Nama Tagihan</label>
+                    <input type="text" id="billName" placeholder="Misal: Listrik PLN, WiFi, Kost, Asuransi" required class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-primary">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Nominal Tagihan (Rp)</label>
+                    <input type="number" id="billAmount" placeholder="350000" required class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-primary">
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-indigo-700 transition flex items-center justify-center gap-2">
+                    <span>⊕</span> Tambah ke Daftar
+                </button>
+            </form>
+        </div>
+
+        <!-- Checklist Tagihan Bulan Ini -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="font-bold text-slate-700 text-base">Checklist Tagihan Bulan Ini</h2>
+                    <p class="text-[11px] text-slate-400">Centang kotak untuk menandai Lunas</p>
+                </div>
+                <div class="flex gap-1.5">
+                    <button onclick="copyPreviousMonthBills()" title="Salin tagihan rutin dari bulan sebelumnya" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-2.5 py-1.5 rounded-xl font-semibold transition flex items-center gap-1">
+                        <span>📋</span> Salin Bulan Lalu
+                    </button>
+                    <button onclick="resetBills()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-2.5 py-1.5 rounded-xl font-medium transition">
+                        Reset
+                    </button>
+                </div>
+            </div>
+            <div id="billList" class="space-y-2.5 text-sm pt-2">
+                Belum ada tagihan rutin.
+            </div>
+        </div>
+
+        <!-- Tambah Cicilan Berjangka (Tenor) -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
+            <h2 class="font-bold text-slate-700 text-base flex items-center gap-2 text-indigo-600"><span>⏱️</span> Tambah Cicilan Berjangka (Tenor)</h2>
+            <form id="installmentForm" class="space-y-3">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Nama Barang / Tagihan</label>
+                    <input type="text" id="instName" placeholder="Contoh: Smartphone, Laptop, Kulkas" required class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-primary">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Nominal / Bulan (Rp)</label>
+                        <input type="number" id="instAmount" placeholder="500000" required class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-primary">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total Tenor (Bulan)</label>
+                        <input type="number" id="instTenor" placeholder="6" required class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-primary">
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-indigo-700 transition flex items-center justify-center gap-2">
+                    <span>⊕</span> Simpan Tracker Cicilan
+                </button>
+            </form>
+        </div>
+
+        <!-- Daftar Tracker Cicilan -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
+            <div>
+                <h2 class="font-bold text-slate-700 text-base">Daftar Tracker Cicilan</h2>
+                <p class="text-[11px] text-slate-400">Pantau progres tenor dan klik tombol bayar bulanan</p>
+            </div>
+            <div id="installmentList" class="space-y-3 pt-2">
+                Belum ada cicilan berjangka.
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="text-center text-xs text-slate-400 py-4">
+        BudgetingKU &copy; 2026
+    </footer>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js');
+        }
+
+        let isLoginMode = true;
+
+        function switchTab(mode) {
+            isLoginMode = (mode === 'login');
+            const tabLogin = document.getElementById('tabLogin');
+            const tabRegister = document.getElementById('tabRegister');
+            const authBtn = document.getElementById('authBtn');
+
+            if (isLoginMode) {
+                tabLogin.className = "flex-1 py-2 text-xs font-bold rounded-lg bg-white text-indigo-600 shadow-sm transition";
+                tabRegister.className = "flex-1 py-2 text-xs font-bold rounded-lg text-slate-500 transition";
+                authBtn.innerText = "Masuk ke Aplikasi";
+            } else {
+                tabRegister.className = "flex-1 py-2 text-xs font-bold rounded-lg bg-white text-indigo-600 shadow-sm transition";
+                tabLogin.className = "flex-1 py-2 text-xs font-bold rounded-lg text-slate-500 transition";
+                authBtn.innerText = "Daftar Akun Baru";
+            }
+        }
+
+        // Cek sesi login saat halaman dimuat
+        let currentUser = localStorage.getItem('budgeting_current_user');
+        if (currentUser) {
+            showApp(currentUser);
+        }
+
+        function handleAuth(e) {
+            e.preventDefault();
+            const username = document.getElementById('authUsername').value.trim().toLowerCase();
+            const password = document.getElementById('authPassword').value;
+
+            let users = JSON.parse(localStorage.getItem('budgeting_users')) || {};
+
+            if (isLoginMode) {
+                // Proses Login
+                if (!users[username] || users[username].password !== password) {
+                    alert('Username atau kata sandi salah!');
+                    return;
+                }
+            } else {
+                // Proses Register
+                if (users[username]) {
+                    alert('Username sudah terdaftar! Silakan gunakan nama lain atau masuk.');
+                    return;
+                }
+                users[username] = { password: password };
+                localStorage.setItem('budgeting_users', JSON.stringify(users));
+                alert('Pendaftaran berhasil! Silakan masuk.');
+                switchTab('login');
+                return;
+            }
+
+            // Simpan sesi aktif
+            localStorage.setItem('budgeting_current_user', username);
+            showApp(username);
+        }
+
+        function logout() {
+            localStorage.removeItem('budgeting_current_user');
+            document.getElementById('mainApp').classList.add('hidden');
+            document.getElementById('appHeader').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('authUsername').value = '';
+            document.getElementById('authPassword').value = '';
+        }
+
+        function showApp(username) {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            document.getElementById('appHeader').classList.remove('hidden');
+            document.getElementById('userDisplayName').innerText = `👤 ${username}`;
+            initApp(username);
+        }
+
+        let dataStore = {};
+        let installmentsStore = {};
+        let activeUserPrefix = '';
+
+        function initApp(username) {
+            activeUserPrefix = username;
+            dataStore = JSON.parse(localStorage.getItem(`budgeting_data_${activeUserPrefix}`)) || {};
+            installmentsStore = JSON.parse(localStorage.getItem(`budgeting_installments_${activeUserPrefix}`)) || [];
+
+            const monthFilter = document.getElementById('monthFilter');
+            const now = new Date();
+            const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            monthFilter.value = currentMonthStr;
+
+            render();
+        }
+
+        function getMonthData(monthKey) {
+            if (!dataStore[monthKey]) {
+                dataStore[monthKey] = { incomes: [], transactions: [], bills: [], installmentPaidKeys: [] };
+            }
+            if (!dataStore[monthKey].installmentPaidKeys) {
+                dataStore[monthKey].installmentPaidKeys = [];
+            }
+            return dataStore[monthKey];
+        }
+
+        function saveData() {
+            localStorage.setItem(`budgeting_data_${activeUserPrefix}`, JSON.stringify(dataStore));
+            localStorage.setItem(`budgeting_installments_${activeUserPrefix}`, JSON.stringify(installmentsStore));
+            render();
+        }
+
+        function copyPreviousMonthBills() {
+            const monthKey = document.getElementById('monthFilter').value;
+            const [year, month] = monthKey.split('-').map(Number);
+            const prevDate = new Date(year, month - 2, 1);
+            const prevMonthKey = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
+
+            if (!dataStore[prevMonthKey] || !dataStore[prevMonthKey].bills || dataStore[prevMonthKey].bills.length === 0) {
+                alert('Tidak ada data tagihan rutin di bulan sebelumnya.');
+                return;
+            }
+
+            const currentData = getMonthData(monthKey);
+            currentData.bills = dataStore[prevMonthKey].bills.map(b => ({
+                name: b.name,
+                amount: b.amount,
+                paid: false
+            }));
+
+            saveData();
+            alert(`Berhasil menyalin tagihan dari bulan ${prevMonthKey}!`);
+        }
+
+        function render() {
+            const monthKey = document.getElementById('monthFilter').value;
+            const currentData = getMonthData(monthKey);
+
+            const totalIncomes = currentData.incomes.reduce((acc, curr) => acc + curr.amount, 0);
+            const totalTrans = currentData.transactions.reduce((acc, curr) => acc + curr.amount, 0);
+            const totalAllBills = currentData.bills.reduce((acc, curr) => acc + curr.amount, 0);
+            const totalAllInstallments = installmentsStore.reduce((acc, curr) => acc + curr.amount, 0);
+
+            const totalExpenses = totalTrans + totalAllBills + totalAllInstallments;
+            const remaining = totalIncomes - totalExpenses;
+
+            document.getElementById('totalIncomeText').innerText = `Rp ${totalIncomes.toLocaleString('id-ID')}`;
+            document.getElementById('totalExpenseText').innerText = `Rp ${totalExpenses.toLocaleString('id-ID')}`;
+            document.getElementById('remainingBudget').innerText = `Rp ${remaining.toLocaleString('id-ID')}`;
+
+            // Render Incomes
+            const incomeList = document.getElementById('incomeList');
+            if (currentData.incomes.length === 0) {
+                incomeList.innerHTML = '<p class="text-xs text-slate-400">Belum ada pemasukan.</p>';
+            } else {
+                incomeList.innerHTML = currentData.incomes.map((item, index) => `
+                    <div class="flex justify-between items-center p-2.5 bg-emerald-50 rounded-xl border border-emerald-100">
+                        <span class="font-medium text-slate-700">${item.name}</span>
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-emerald-600">+ Rp ${item.amount.toLocaleString('id-ID')}</span>
+                            <button onclick="deleteItem('incomes', ${index})" class="text-xs text-rose-500 font-bold px-2 py-1 bg-white rounded-lg border border-rose-200">🗑️</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Render Transaksi
+            const transList = document.getElementById('transList');
+            if (currentData.transactions.length === 0) {
+                transList.innerHTML = '<p class="text-xs text-slate-400">Belum ada pengeluaran harian.</p>';
+            } else {
+                transList.innerHTML = currentData.transactions.map((item, index) => `
+                    <div class="flex justify-between items-center p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                        <span class="font-medium text-slate-700">${item.name}</span>
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-rose-600">- Rp ${item.amount.toLocaleString('id-ID')}</span>
+                            <button onclick="deleteItem('transactions', ${index})" class="text-xs text-rose-500 font-bold px-2 py-1 bg-white rounded-lg border border-rose-200">🗑️</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Render Tagihan
+            const billList = document.getElementById('billList');
+            if (currentData.bills.length === 0) {
+                billList.innerHTML = '<p class="text-xs text-slate-400">Belum ada tagihan rutin.</p>';
+            } else {
+                billList.innerHTML = currentData.bills.map((item, index) => `
+                    <div class="flex items-center justify-between p-3 rounded-2xl border transition ${item.paid ? 'bg-emerald-50/60 border-emerald-200' : 'bg-white border-slate-200'}">
+                        <div class="flex items-center gap-3">
+                            <input type="checkbox" ${item.paid ? 'checked' : ''} onchange="toggleBillPaid(${index})" class="w-5 h-5 accent-indigo-600 rounded cursor-pointer">
+                            <div>
+                                <p class="font-bold text-slate-800 ${item.paid ? 'line-through text-slate-400' : ''}">${item.name}</p>
+                                <div class="flex items-center gap-2 mt-0.5">
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${item.paid ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
+                                        ${item.paid ? '✓ Sudah Lunas' : 'Belum Dibayar'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-extrabold ${item.paid ? 'text-slate-400' : 'text-slate-700'}">Rp ${item.amount.toLocaleString('id-ID')}</span>
+                            <button onclick="deleteItem('bills', ${index})" class="text-xs text-slate-400 hover:text-rose-500 p-1.5 rounded-lg transition">🗑️</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Render Cicilan
+            const installmentList = document.getElementById('installmentList');
+            if (installmentsStore.length === 0) {
+                installmentList.innerHTML = '<p class="text-xs text-slate-400">Belum ada cicilan berjangka.</p>';
+            } else {
+                installmentList.innerHTML = installmentsStore.map((inst, index) => {
+                    const isPaidThisMonth = currentData.installmentPaidKeys.includes(index);
+                    const paidMonths = inst.paidMonths || 0;
+                    const remainingMonths = inst.tenor - paidMonths;
+                    const remainingAmount = remainingMonths * inst.amount;
+                    const progressPercent = Math.round((paidMonths / inst.tenor) * 100);
+
+                    return `
+                        <div class="p-3.5 bg-white rounded-2xl border border-slate-200 space-y-2.5 shadow-sm">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <p class="font-bold text-slate-900">${inst.name}</p>
+                                        <span class="text-[10px] font-bold bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full">Cicilan ke-${paidMonths + 1 > inst.tenor ? inst.tenor : paidMonths + 1} dari ${inst.tenor}</span>
+                                    </div>
+                                    <p class="text-xs text-slate-500 mt-1">Rp ${inst.amount.toLocaleString('id-ID')} /bln • Sisa: <b class="text-rose-600">Rp ${remainingAmount.toLocaleString('id-ID')}</b></p>
+                                </div>
+                                <button onclick="deleteInstallment(${index})" class="text-xs text-slate-400 hover:text-rose-500 p-1">🗑️</button>
+                            </div>
+                            <div class="space-y-1">
+                                <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                    <div class="bg-indigo-600 h-full rounded-full transition-all duration-300" style="width: ${progressPercent}%"></div>
+                                </div>
+                                <div class="flex justify-between text-[11px] text-slate-400 font-medium">
+                                    <span>Progres: ${progressPercent}%</span>
+                                    <span>Sisa: ${remainingMonths} bulan</span>
+                                </div>
+                            </div>
+                            <button onclick="toggleInstallmentPaid(${index})" class="w-full py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${isPaidThisMonth ? 'bg-emerald-100 text-emerald-800' : 'bg-emerald-600 text-white hover:bg-emerald-700'}">
+                                ${isPaidThisMonth ? '✓ Sudah Dibayar Bulan Ini' : '🟢 Bayar Cicilan Bulan Ini'}
+                            </button>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        function toggleBillPaid(index) {
+            const monthKey = document.getElementById('monthFilter').value;
+            dataStore[monthKey].bills[index].paid = !dataStore[monthKey].bills[index].paid;
+            saveData();
+        }
+
+        function resetBills() {
+            const monthKey = document.getElementById('monthFilter').value;
+            const currentData = getMonthData(monthKey);
+            currentData.bills.forEach(b => b.paid = false);
+            saveData();
+        }
+
+        function toggleInstallmentPaid(index) {
+            const monthKey = document.getElementById('monthFilter').value;
+            const currentData = getMonthData(monthKey);
+            const keyIndex = currentData.installmentPaidKeys.indexOf(index);
+
+            if (keyIndex > -1) {
+                currentData.installmentPaidKeys.splice(keyIndex, 1);
+                if (installmentsStore[index].paidMonths > 0) {
+                    installmentsStore[index].paidMonths -= 1;
+                }
+            } else {
+                if ((installmentsStore[index].paidMonths || 0) < installmentsStore[index].tenor) {
+                    currentData.installmentPaidKeys.push(index);
+                    installmentsStore[index].paidMonths = (installmentsStore[index].paidMonths || 0) + 1;
+                }
+            }
+            saveData();
+        }
+
+        function deleteItem(type, index) {
+            const monthKey = document.getElementById('monthFilter').value;
+            dataStore[monthKey][type].splice(index, 1);
+            saveData();
+        }
+
+        function deleteInstallment(index) {
+            installmentsStore.splice(index, 1);
+            saveData();
+        }
+
+        document.getElementById('monthFilter').addEventListener('change', render);
+
+        document.getElementById('incomeForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const monthKey = document.getElementById('monthFilter').value;
+            const name = document.getElementById('incomeName').value;
+            const amount = Number(document.getElementById('incomeAmount').value);
+            dataStore[monthKey].incomes.push({ name, amount });
+            document.getElementById('incomeName').value = '';
+            document.getElementById('incomeAmount').value = '';
+            saveData();
+        });
+
+        document.getElementById('transForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const monthKey = document.getElementById('monthFilter').value;
+            const name = document.getElementById('transName').value;
+            const amount = Number(document.getElementById('transAmount').value);
+            dataStore[monthKey].transactions.push({ name, amount });
+            document.getElementById('transName').value = '';
+            document.getElementById('transAmount').value = '';
+            saveData();
+        });
+
+        document.getElementById('billForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const monthKey = document.getElementById('monthFilter').value;
+            const name = document.getElementById('billName').value;
+            const amount = Number(document.getElementById('billAmount').value);
+            dataStore[monthKey].bills.push({ name, amount, paid: false });
+            document.getElementById('billName').value = '';
+            document.getElementById('billAmount').value = '';
+            saveData();
+        });
+
+        document.getElementById('installmentForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('instName').value;
+            const amount = Number(document.getElementById('instAmount').value);
+            const tenor = Number(document.getElementById('instTenor').value);
+            installmentsStore.push({ name, amount, tenor, paidMonths: 0 });
+            document.getElementById('instName').value = '';
+            document.getElementById('instAmount').value = '';
+            document.getElementById('instTenor').value = '';
+            saveData();
+        });
+    </script>
+</body>
+</html>

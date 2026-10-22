@@ -1,0 +1,6 @@
+{
+  "name": "BudgetingKU",
+  "description": "Aplikasi manajemen keuangan pribadi, tagihan rutin bulanan, dan pelacak cicilan berjangka.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
