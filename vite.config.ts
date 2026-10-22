@@ -5,6 +5,7 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
+    base: './', // <-- Tambahkan baris ini di sini bro
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
